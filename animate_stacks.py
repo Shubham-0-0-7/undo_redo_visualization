@@ -17,9 +17,11 @@ class UndoRedoStackScene(Scene):
         redo_title = Text("Redo Stack", color=redo_color).scale(0.6).to_corner(UR)
         self.play(Write(undo_title), Write(redo_title))
 
-        # --- Stack Positioning ---
-        undo_stack = VGroup().arrange(DOWN, buff=0.1).next_to(undo_title, DOWN, buff=0.4)
-        redo_stack = VGroup().arrange(DOWN, buff=0.1).next_to(redo_title, DOWN, buff=0.4)
+        # --- Stack Groups ---
+        undo_stack_group = VGroup()
+        redo_stack_group = VGroup()
+        undo_stack_group.next_to(undo_title, DOWN, buff=0.4)
+        redo_stack_group.next_to(redo_title, DOWN, buff=0.4)
 
         # Helper to create a stack box
         def create_box(text, color):
@@ -29,35 +31,28 @@ class UndoRedoStackScene(Scene):
             return VGroup(box, label)
 
         # Animate pushing to a stack
-        def push_to_stack(stack_group, text, color, direction=DOWN):
+        def push_to_stack(stack_group, text, color):
             box = create_box(text, color)
-            if stack_group:
-                box.next_to(stack_group[0], direction, buff=0.1)
-                stack_group.add(box)
+            if len(stack_group) > 0:
+                box.next_to(stack_group[-1], DOWN, buff=0.1)
             else:
-                box.next_to(undo_title if direction == DOWN else redo_title, DOWN, buff=0.4)
-                stack_group.add(box)
+                if stack_group == undo_stack_group:
+                    box.next_to(undo_title, DOWN, buff=0.4)
+                else:
+                    box.next_to(redo_title, DOWN, buff=0.4)
+            
+            stack_group.add(box)
             self.play(FadeIn(box, shift=UP), run_time=0.4)
             return box
 
         # Animate popping from a stack
         def pop_from_stack(stack_group):
-            if stack_group:
-                box = stack_group[0]
+            if len(stack_group) > 0:
+                box = stack_group[-1]
                 stack_group.remove(box)
                 self.play(FadeOut(box, shift=UP), run_time=0.4)
                 return box
             return None
-
-        # Sync the stacks
-        def update_stacks():
-            for i, box in enumerate(undo_stack):
-                box.move_to(undo_title.get_bottom() - DOWN * (i + 1) * 0.7)
-            for i, box in enumerate(redo_stack):
-                box.move_to(redo_title.get_bottom() - DOWN * (i + 1) * 0.7)
-            self.play(LaggedStart(*[
-                box.animate.move_to(box.get_center()) for box in undo_stack + redo_stack
-            ], lag_ratio=0.1), run_time=0.4)
 
         # Example Operations:
         ops = [
@@ -74,23 +69,23 @@ class UndoRedoStackScene(Scene):
         for op, text in ops:
             if op == "append":
                 manager.append(text)
-                push_to_stack(undo_stack, text, text_color)
-                for redo_box in redo_stack:
-                    self.play(FadeOut(redo_box, shift=DOWN), run_time=0.2)
-                redo_stack.clear()
+                push_to_stack(undo_stack_group, text, text_color)
+                # Clear redo stack visually
+                for box in reversed(redo_stack_group):
+                    self.play(FadeOut(box, shift=DOWN), run_time=0.2)
+                redo_stack_group = VGroup()
             elif op == "undo":
                 action = manager.undo()
                 if action:
-                    box = pop_from_stack(undo_stack)
+                    box = pop_from_stack(undo_stack_group)
                     if box:
-                        push_to_stack(redo_stack, action, text_color)
+                        push_to_stack(redo_stack_group, action, text_color)
             elif op == "redo":
                 action = manager.redo()
                 if action:
-                    box = pop_from_stack(redo_stack)
+                    box = pop_from_stack(redo_stack_group)
                     if box:
-                        push_to_stack(undo_stack, action, text_color)
-            update_stacks()
+                        push_to_stack(undo_stack_group, action, text_color)
             self.wait(0.3)
 
         # Final Pause
