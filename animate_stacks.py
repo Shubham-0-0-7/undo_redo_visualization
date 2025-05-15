@@ -3,7 +3,6 @@ import undo_redo as ur
 
 class UndoRedoAnimation(Scene):
     def construct(self):
-        # --- Titles ---
         undo_title = Text("Undo Stack", color=BLUE).scale(0.6).to_corner(UL)
         redo_title = Text("Redo Stack", color=RED).scale(0.6).to_corner(UR)
         curr_title = Text("Current String:", color=YELLOW).scale(0.6).to_edge(DOWN).shift(UP * 0.2)
@@ -51,7 +50,6 @@ class UndoRedoAnimation(Scene):
             while len(stack_group) > 0:
                 pop_stack(stack_group)
 
-        # Initialize with empty string
         ur.curr = ""
         ur.undotop = -1
         ur.redotop = -1
@@ -59,7 +57,6 @@ class UndoRedoAnimation(Scene):
         push_stack(undo_stack, ur.curr, is_undo=True)
         update_curr_text()
 
-        # Simulated session
         actions = [
             ("append", "Hi"),
             ("append", " "),
@@ -70,7 +67,7 @@ class UndoRedoAnimation(Scene):
             ("append", "!!"),
             ("undo", None),
             ("redo", None),
-            ("redo", None),  # Nothing to redo
+            ("redo", None),  
         ]
 
         for action, text in actions:
