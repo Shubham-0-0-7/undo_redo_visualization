@@ -17,4 +17,4 @@ This project visualizes a sequence of text edits and stack operations with clear
 ### 📽️ Tech Stack
 
 *   **Python 3**
-*   **Manim Community Edition**
+*   **Manim Community v0.19.0**
